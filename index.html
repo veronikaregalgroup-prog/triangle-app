@@ -20,7 +20,6 @@
       overflow: hidden;
     }
 
-    /* עמודת שליטה ימנית הניתנת לשינוי רוחב ולכיווץ */
     .sidebar {
       width: 320px;
       min-width: 240px;
@@ -97,7 +96,6 @@
       background: #e2e8f0;
     }
 
-    /* ידית גרירה לשינוי רוחב העמודה */
     .resizer-handle {
       position: absolute;
       top: 0;
@@ -233,7 +231,6 @@
       background-color: #1e293b;
     }
 
-    /* אזור הקנבס */
     .canvas-container {
       flex: 1;
       position: relative;
@@ -257,7 +254,6 @@
   </style>
 </head>
 <body>
-
   <aside class="sidebar" id="sidebar">
     <div class="resizer-handle" id="resizerHandle" title="גרור לשינוי רוחב העמודה"></div>
 
@@ -275,7 +271,6 @@
         גררו את הקצוות שעל רשת המשבצות כדי לסובב כל צלע ב-360° סביב הקודקוד שלה בלי לשנות את אורכה.
       </div>
 
-      <!-- צלע א' (בסיס) -->
       <div class="control-group">
         <div class="control-header">
           <span class="side-a-label">צלע א' (בסיס)</span>
@@ -286,7 +281,6 @@
         </div>
       </div>
 
-      <!-- צלע ב' (שמאלית) -->
       <div class="control-group">
         <div class="control-header">
           <span class="side-b-label">צלע ב'</span>
@@ -297,7 +291,6 @@
         </div>
       </div>
 
-      <!-- צלע ג' (ימנית) -->
       <div class="control-group">
         <div class="control-header">
           <span class="side-c-label">צלע ג'</span>
@@ -337,15 +330,14 @@
     const statusBox = document.getElementById('statusBox');
     const btnSnap = document.getElementById('btnSnap');
 
-    let a = 6; // בסיס
-    let b = 5; // צלע מחוברת לקודקוד שמאלי
-    let c = 4; // צלע מחוברת לקודקוד ימני
+    let a = 6;
+    let b = 5;
+    let c = 4;
 
     let angleB = 0;
     let angleC = Math.PI;
     let draggingHandle = null;
 
-    // קנה מידה דינמי למשבצת כך שכל הסיבוב ב-360° יישאר תמיד בתוך המסך
     let gridSize = 32;
 
     const COLORS = {
@@ -357,7 +349,6 @@
       fillValid: 'rgba(37, 99, 235, 0.08)'
     };
 
-    // --- ניהול הקטנה, הגדלה וכיווץ של העמודה הימנית ---
     btnToggleSidebar.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
       const isCollapsed = sidebar.classList.contains('collapsed');
@@ -377,7 +368,6 @@
 
     window.addEventListener('mousemove', (e) => {
       if (!isResizingSidebar) return;
-      // כיוון RTL: העמודה בצד ימין, לכן רוחבה הוא מרחק העכבר מקצה ימין של החלון
       const newWidth = window.innerWidth - e.clientX;
       const clampedWidth = Math.max(240, Math.min(520, newWidth));
       sidebar.style.width = `${clampedWidth}px`;
@@ -393,15 +383,10 @@
       }
     });
 
-    // --- חישוב קנה מידה מותאם אוטומטית לגודל הצג ולאורך הצלעות ---
     function computeViewportMetrics() {
       const width = canvas.parentElement.clientWidth;
       const height = canvas.parentElement.clientHeight;
 
-      // גבולות מערכת הצירים ביחידות משבצת:
-      // קודקוד שמאלי ב- (-a/2, 0), קודקוד ימני ב- (+a/2, 0)
-      // מעגל הסיבוב השמאלי משתרע עד (-a/2 - b) שמאלה ועד (+b / -b) אנכית
-      // מעגל הסיבוב הימני משתרע עד (+a/2 + c) ימינה ועד (+c / -c) אנכית
       const minXUnits = Math.min(-a / 2 - b, a / 2 - c);
       const maxXUnits = Math.max(a / 2 + c, -a / 2 + b);
       const totalWidthUnits = maxXUnits - minXUnits;
@@ -409,7 +394,6 @@
       const maxRadiusUnits = Math.max(b, c, 1);
       const totalHeightUnits = 2 * maxRadiusUnits;
 
-      // שוליים נדיבים מסביב כדי שגם תוויות וידיות בקצה הסיבוב לא ייחתכו
       const paddingPx = 56;
       const availWidth = Math.max(120, width - paddingPx * 2);
       const availHeight = Math.max(120, height - paddingPx * 2);
@@ -417,10 +401,8 @@
       const scaleX = availWidth / totalWidthUnits;
       const scaleY = availHeight / totalHeightUnits;
 
-      // הגבלת גודל משבצת מרבי כדי שבצלעות קצרות הרשת תישאר נעימה לעין
       gridSize = Math.max(8, Math.min(36, scaleX, scaleY));
 
-      // מירכוז אופקי ואנכי מדויק של כל מעטפת הסיבוב בתוך הקנבס
       const centerUnitsX = (minXUnits + maxXUnits) / 2;
       const originX = width / 2 - centerUnitsX * gridSize;
       const baseY = height / 2;
@@ -544,7 +526,6 @@
     function drawGrid(width, height, leftX, baseY) {
       ctx.clearRect(0, 0, width, height);
 
-      // עיגון רשת המשבצות לקודקוד השמאלי של הבסיס כדי שהמשבצות יתאימו בדיוק לאורכי הצלעות
       const startX = leftX % gridSize;
       const startY = baseY % gridSize;
 
@@ -649,11 +630,9 @@
         ctx.restore();
       }
 
-      // 1. מעגלי טווח סיבוב מקווקווים 360 מעלות
       drawDashedCircle(leftX, baseY, radiusB, COLORS.b);
       drawDashedCircle(rightX, baseY, radiusC, COLORS.c);
 
-      // 2. ציור הצלעות
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(leftX, baseY);
@@ -684,12 +663,10 @@
       ctx.stroke();
       ctx.restore();
 
-      // 3. תוויות אורך בצבע של כל צלע
       drawSideLabel(`${a}`, leftX, baseY, rightX, baseY, COLORS.a, -1);
       drawSideLabel(`${b}`, leftX, baseY, tipBx, tipBy, COLORS.b, 1);
       drawSideLabel(`${c}`, rightX, baseY, tipCx, tipCy, COLORS.c, -1);
 
-      // 4. נקודות ציר וידיות סיבוב
       drawPoint(leftX, baseY, COLORS.a, false);
       drawPoint(rightX, baseY, COLORS.a, false);
       drawPoint(tipBx, tipBy, COLORS.b, true);
