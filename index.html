@@ -5,36 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>חקירת אי-שוויון המשולש</title>
   <style>
+    :root {
+      --bg-app: #f0f4f8;
+      --bg-panel: #ffffff;
+      --border-soft: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --color-a: #2563eb;
+      --color-a-bg: #eff6ff;
+      --color-a-border: #bfdbfe;
+      --color-b: #dc2626;
+      --color-b-bg: #fef2f2;
+      --color-b-border: #fecaca;
+      --color-c: #16a34a;
+      --color-c-bg: #f0fdf4;
+      --color-c-border: #bbf7d0;
+    }
+
     * {
       box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     }
 
     body {
       margin: 0;
       padding: 0;
-      background-color: #f4f6f9;
-      color: #1e293b;
+      background-color: var(--bg-app);
+      color: var(--text-main);
       display: flex;
       height: 100vh;
       overflow: hidden;
     }
 
     .sidebar {
-      width: 320px;
-      min-width: 240px;
+      width: 350px;
+      min-width: 260px;
       max-width: 520px;
-      background: #ffffff;
+      background: var(--bg-panel);
       border-left: 1px solid #cbd5e1;
-      padding: 18px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
-      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.04);
+      box-shadow: -4px 0 18px rgba(15, 23, 42, 0.06);
       z-index: 10;
       position: relative;
-      transition: width 0.15s ease, padding 0.15s ease;
+      transition: width 0.18s ease, padding 0.18s ease;
     }
 
     .sidebar.resizing {
@@ -43,9 +60,9 @@
     }
 
     .sidebar.collapsed {
-      width: 46px !important;
-      min-width: 46px !important;
-      padding: 12px 6px;
+      width: 52px !important;
+      min-width: 52px !important;
+      padding: 14px 8px;
       overflow: hidden;
       align-items: center;
     }
@@ -54,53 +71,11 @@
       display: none;
     }
 
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 10px;
-    }
-
-    .sidebar.collapsed .sidebar-header {
-      border-bottom: none;
-      padding-bottom: 0;
-      justify-content: center;
-    }
-
-    .sidebar h1 {
-      font-size: 1.25rem;
-      margin: 0;
-      color: #0f172a;
-      white-space: nowrap;
-    }
-
-    .btn-toggle-sidebar {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      border-radius: 6px;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .btn-toggle-sidebar:hover {
-      background: #e2e8f0;
-    }
-
     .resizer-handle {
       position: absolute;
       top: 0;
       left: 0;
-      width: 7px;
+      width: 8px;
       height: 100%;
       cursor: ew-resize;
       background: transparent;
@@ -112,123 +87,260 @@
 
     .resizer-handle:hover,
     .resizer-handle.active {
-      background: rgba(37, 99, 235, 0.15);
+      background: rgba(37, 99, 235, 0.12);
     }
 
     .resizer-handle::after {
       content: "";
-      width: 2px;
-      height: 36px;
+      width: 3px;
+      height: 40px;
       background: #94a3b8;
-      border-radius: 2px;
+      border-radius: 3px;
     }
 
     .sidebar.collapsed .resizer-handle {
       display: none;
     }
 
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 2px solid var(--border-soft);
+      padding-bottom: 12px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      border-bottom: none;
+      padding-bottom: 0;
+      justify-content: center;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 0;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
+    .subtitle {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .btn-toggle-sidebar {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: #e2e8f0;
+    }
+
     .sidebar-content {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .instructions {
-      font-size: 0.9rem;
-      line-height: 1.5;
-      color: #475569;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #334155;
       background: #f8fafc;
-      padding: 11px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
     }
 
-    .control-group {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 11px 13px;
+    .control-card {
+      border-radius: 14px;
+      padding: 13px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      border: 1.5px solid var(--border-soft);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    }
+
+    .card-a {
+      background: var(--color-a-bg);
+      border-color: var(--color-a-border);
+    }
+
+    .card-b {
+      background: var(--color-b-bg);
+      border-color: var(--color-b-border);
+    }
+
+    .card-c {
+      background: var(--color-c-bg);
+      border-color: var(--color-c-border);
     }
 
     .control-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-weight: 700;
-      font-size: 0.98rem;
+      font-weight: 800;
+      font-size: 1rem;
     }
 
-    .side-a-label { color: #2563eb; }
-    .side-b-label { color: #dc2626; }
-    .side-c-label { color: #16a34a; }
+    .side-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    .input-row {
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-a { background: var(--color-a); }
+    .dot-b { background: var(--color-b); }
+    .dot-c { background: var(--color-c); }
+
+    .label-a { color: var(--color-a); }
+    .label-b { color: var(--color-b); }
+    .label-c { color: var(--color-c); }
+
+    .stepper-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+    }
+
+    .btn-step {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1.5px solid rgba(15, 23, 42, 0.14);
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background 0.15s, transform 0.1s;
+      user-select: none;
+    }
+
+    .btn-step:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-step:active {
+      transform: scale(0.95);
     }
 
     input[type="range"] {
       flex: 1;
-      min-width: 60px;
+      min-width: 50px;
+      height: 6px;
+      border-radius: 999px;
       cursor: pointer;
     }
 
+    #sliderA { accent-color: var(--color-a); }
+    #sliderB { accent-color: var(--color-b); }
+    #sliderC { accent-color: var(--color-c); }
+
     input[type="number"] {
-      width: 66px;
-      padding: 5px 6px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 0.98rem;
-      font-weight: bold;
+      width: 64px;
+      height: 34px;
+      padding: 4px 6px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 9px;
+      background: #ffffff;
+      font-size: 1rem;
+      font-weight: 800;
       text-align: center;
+      color: var(--text-main);
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #64748b;
     }
 
     .status-box {
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 0.92rem;
-      line-height: 1.5;
-      font-weight: 600;
+      padding: 14px 15px;
+      border-radius: 14px;
+      font-size: 0.94rem;
+      line-height: 1.55;
+      font-weight: 700;
       text-align: center;
       border: 2px solid transparent;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      transition: all 0.2s ease;
     }
 
     .status-valid {
-      background-color: #dcfce7;
-      color: #166534;
-      border-color: #86efac;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #14532d;
+      border-color: #4ade80;
     }
 
     .status-degenerate {
-      background-color: #fef9c3;
-      color: #854d0e;
-      border-color: #fde047;
+      background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
+      color: #713f12;
+      border-color: #facc15;
     }
 
     .status-invalid {
-      background-color: #fee2e2;
-      color: #991b1b;
-      border-color: #fca5a5;
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #7f1d1d;
+      border-color: #f87171;
     }
 
     .btn-reset {
-      padding: 10px 12px;
-      background-color: #334155;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       color: #ffffff;
       border: none;
-      border-radius: 8px;
-      font-size: 0.92rem;
-      font-weight: 600;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.15);
+      transition: opacity 0.15s, transform 0.1s;
     }
 
     .btn-reset:hover {
-      background-color: #1e293b;
+      opacity: 0.94;
+    }
+
+    .btn-reset:active {
+      transform: scale(0.99);
     }
 
     .canvas-container {
@@ -254,49 +366,66 @@
   </style>
 </head>
 <body>
+
   <aside class="sidebar" id="sidebar">
-    <div class="resizer-handle" id="resizerHandle" title="גרור לשינוי רוחב העמודה"></div>
+    <div class="resizer-handle" id="resizerHandle" title="גרירה לשינוי רוחב העמודה"></div>
 
     <div class="sidebar-header">
       <button class="btn-toggle-sidebar" id="btnToggleSidebar" title="כווץ / הרחב תפריט">❯</button>
-      <div class="sidebar-content" style="flex:1;">
+      <div class="sidebar-content title-wrap" style="flex:1;">
         <h1>אי-שוויון המשולש</h1>
+        <span class="subtitle">חקירת בניית משולש משלושה קטעים</span>
       </div>
     </div>
 
     <div class="sidebar-content">
       <div class="instructions">
-        בחרו אורכים לשלוש הצלעות בעזרת המחוונים או תיבות המספרים.
+        קבעו את אורך הצלעות בעזרת המחוונים, כפתורי <strong>+</strong> ו-<strong>−</strong> או תיבות המספרים.
         <br />
-        גררו את הקצוות שעל רשת המשבצות כדי לסובב כל צלע ב-360° סביב הקודקוד שלה בלי לשנות את אורכה.
+        סובבו כל צלע ב-360° על גבי הרשת בעזרת העיגולים שבקצותיהן מבלי לשנות את אורכן.
       </div>
 
-      <div class="control-group">
+      <div class="control-card card-a">
         <div class="control-header">
-          <span class="side-a-label">צלע א' (בסיס)</span>
+          <span class="side-badge label-a">
+            <span class="dot dot-a"></span>
+            צלע א' (בסיס)
+          </span>
         </div>
-        <div class="input-row">
+        <div class="stepper-row">
+          <button type="button" class="btn-step" data-side="a" data-delta="-0.5" title="הקטן">−</button>
           <input type="range" id="sliderA" min="1" max="15" step="0.5" value="6" />
+          <button type="button" class="btn-step" data-side="a" data-delta="0.5" title="הגדל">+</button>
           <input type="number" id="numA" min="1" max="15" step="0.5" value="6" />
         </div>
       </div>
 
-      <div class="control-group">
+      <div class="control-card card-b">
         <div class="control-header">
-          <span class="side-b-label">צלע ב'</span>
+          <span class="side-badge label-b">
+            <span class="dot dot-b"></span>
+            צלע ב' (שמאלית)
+          </span>
         </div>
-        <div class="input-row">
+        <div class="stepper-row">
+          <button type="button" class="btn-step" data-side="b" data-delta="-0.5" title="הקטן">−</button>
           <input type="range" id="sliderB" min="1" max="15" step="0.5" value="5" />
+          <button type="button" class="btn-step" data-side="b" data-delta="0.5" title="הגדל">+</button>
           <input type="number" id="numB" min="1" max="15" step="0.5" value="5" />
         </div>
       </div>
 
-      <div class="control-group">
+      <div class="control-card card-c">
         <div class="control-header">
-          <span class="side-c-label">צלע ג'</span>
+          <span class="side-badge label-c">
+            <span class="dot dot-c"></span>
+            צלע ג' (ימנית)
+          </span>
         </div>
-        <div class="input-row">
+        <div class="stepper-row">
+          <button type="button" class="btn-step" data-side="c" data-delta="-0.5" title="הקטן">−</button>
           <input type="range" id="sliderC" min="1" max="15" step="0.5" value="4" />
+          <button type="button" class="btn-step" data-side="c" data-delta="0.5" title="הגדל">+</button>
           <input type="number" id="numC" min="1" max="15" step="0.5" value="4" />
         </div>
       </div>
@@ -305,7 +434,7 @@
         ניתן לבנות משולש סגור ותקין!
       </div>
 
-      <button class="btn-reset" id="btnSnap">הצג מצב התחלתי / סגור משולש</button>
+      <button type="button" class="btn-reset" id="btnSnap">הצג מצב התחלתי / סגור משולש</button>
     </div>
   </aside>
 
@@ -337,8 +466,7 @@
     let angleB = 0;
     let angleC = Math.PI;
     let draggingHandle = null;
-
-    let gridSize = 32;
+    let gridSize = 42;
 
     const COLORS = {
       a: '#2563eb',
@@ -346,7 +474,8 @@
       c: '#16a34a',
       grid: '#e2e8f0',
       gridMajor: '#cbd5e1',
-      fillValid: 'rgba(37, 99, 235, 0.08)'
+      fillValid: 'rgba(37, 99, 235, 0.11)',
+      fillStroke: 'rgba(37, 99, 235, 0.25)'
     };
 
     btnToggleSidebar.addEventListener('click', () => {
@@ -369,7 +498,7 @@
     window.addEventListener('mousemove', (e) => {
       if (!isResizingSidebar) return;
       const newWidth = window.innerWidth - e.clientX;
-      const clampedWidth = Math.max(240, Math.min(520, newWidth));
+      const clampedWidth = Math.max(260, Math.min(520, newWidth));
       sidebar.style.width = `${clampedWidth}px`;
       resizeCanvas();
     });
@@ -394,14 +523,14 @@
       const maxRadiusUnits = Math.max(b, c, 1);
       const totalHeightUnits = 2 * maxRadiusUnits;
 
-      const paddingPx = 56;
+      const paddingPx = 48;
       const availWidth = Math.max(120, width - paddingPx * 2);
       const availHeight = Math.max(120, height - paddingPx * 2);
 
       const scaleX = availWidth / totalWidthUnits;
       const scaleY = availHeight / totalHeightUnits;
 
-      gridSize = Math.max(8, Math.min(36, scaleX, scaleY));
+      gridSize = Math.max(10, Math.min(56, scaleX, scaleY));
 
       const centerUnitsX = (minXUnits + maxXUnits) / 2;
       const originX = width / 2 - centerUnitsX * gridSize;
@@ -481,7 +610,7 @@
 
       if (state === 'valid') {
         statusBox.classList.add('status-valid');
-        statusBox.textContent = 'ניתן לבנות משולש סגור ותקין! ניתן לגרור ולסובב כל צלע בנפרד ב-360°.';
+        statusBox.textContent = 'ניתן לבנות משולש סגור ותקין! גררו את קצות הצלעות כדי לסובב כל צלע ב-360°.';
       } else if (state === 'degenerate') {
         statusBox.classList.add('status-degenerate');
         statusBox.textContent = 'סכום שתי צלעות שווה לצלע השלישית: הקטעים מתלכדים לקו ישר (משולש מנוון).';
@@ -492,7 +621,10 @@
     }
 
     function syncInputs(source, value) {
-      const val = Math.max(1, Math.min(15, parseFloat(value) || 1));
+      const parsed = parseFloat(value);
+      const clamped = Math.max(1, Math.min(15, isNaN(parsed) ? 1 : parsed));
+      const val = Math.round(clamped * 2) / 2;
+
       if (source === 'a') {
         a = val;
         sliderA.value = val;
@@ -506,10 +638,20 @@
         sliderC.value = val;
         numC.value = val;
       }
+
       resetAnglesToDefault();
       updateStatusUI();
       draw();
     }
+
+    document.querySelectorAll('.btn-step').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const side = btn.dataset.side;
+        const delta = parseFloat(btn.dataset.delta);
+        const current = side === 'a' ? a : side === 'b' ? b : c;
+        syncInputs(side, current + delta);
+      });
+    });
 
     sliderA.addEventListener('input', (e) => syncInputs('a', e.target.value));
     numA.addEventListener('input', (e) => syncInputs('a', e.target.value));
@@ -526,8 +668,8 @@
     function drawGrid(width, height, leftX, baseY) {
       ctx.clearRect(0, 0, width, height);
 
-      const startX = leftX % gridSize;
-      const startY = baseY % gridSize;
+      const startX = ((leftX % gridSize) + gridSize) % gridSize;
+      const startY = ((baseY % gridSize) + gridSize) % gridSize;
 
       ctx.lineWidth = 1;
       for (let x = startX; x <= width; x += gridSize) {
@@ -552,10 +694,10 @@
     function drawDashedCircle(cx, cy, radiusPx, color) {
       ctx.save();
       ctx.beginPath();
-      ctx.setLineDash([6, 6]);
+      ctx.setLineDash([7, 6]);
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.45;
-      ctx.lineWidth = 1.8;
+      ctx.globalAlpha = 0.42;
+      ctx.lineWidth = 2;
       ctx.arc(cx, cy, radiusPx, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
@@ -569,33 +711,49 @@
       const dy = y2 - y1;
       const len = Math.hypot(dx, dy) || 1;
 
-      const nx = (-dy / len) * 20 * offsetSign;
-      const ny = (dx / len) * 20 * offsetSign;
+      const nx = (-dy / len) * 22 * offsetSign;
+      const ny = (dx / len) * 22 * offsetSign;
 
       const labelX = midX + nx;
       const labelY = midY + ny;
 
       ctx.save();
-      ctx.font = 'bold 15px Segoe UI, sans-serif';
+      ctx.font = '800 16px Segoe UI, sans-serif';
       const textWidth = ctx.measureText(text).width;
+      const pillW = textWidth + 14;
+      const pillH = 26;
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillRect(labelX - textWidth / 2 - 5, labelY - 11, textWidth + 10, 22);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(labelX - pillW / 2, labelY - pillH / 2, pillW, pillH, 8);
+      ctx.fill();
+      ctx.stroke();
 
       ctx.fillStyle = color;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(text, labelX, labelY);
+      ctx.fillText(text, labelX, labelY + 0.5);
       ctx.restore();
     }
 
     function drawPoint(x, y, color, isHandle = false) {
       ctx.save();
+      if (isHandle) {
+        ctx.beginPath();
+        ctx.arc(x, y, 13, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.14;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
       ctx.beginPath();
-      ctx.arc(x, y, isHandle ? 8 : 5.5, 0, Math.PI * 2);
+      ctx.arc(x, y, isHandle ? 8.5 : 6, 0, Math.PI * 2);
       ctx.fillStyle = isHandle ? '#ffffff' : color;
       ctx.fill();
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.2;
       ctx.strokeStyle = color;
       ctx.stroke();
       ctx.restore();
@@ -638,7 +796,7 @@
       ctx.moveTo(leftX, baseY);
       ctx.lineTo(rightX, baseY);
       ctx.strokeStyle = COLORS.a;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 6;
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.restore();
@@ -648,7 +806,7 @@
       ctx.moveTo(leftX, baseY);
       ctx.lineTo(tipBx, tipBy);
       ctx.strokeStyle = COLORS.b;
-      ctx.lineWidth = 4.5;
+      ctx.lineWidth = 5.5;
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.restore();
@@ -658,7 +816,7 @@
       ctx.moveTo(rightX, baseY);
       ctx.lineTo(tipCx, tipCy);
       ctx.strokeStyle = COLORS.c;
-      ctx.lineWidth = 4.5;
+      ctx.lineWidth = 5.5;
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.restore();
@@ -694,7 +852,7 @@
       const distB = Math.hypot(pos.x - tipBx, pos.y - tipBy);
       const distC = Math.hypot(pos.x - tipCx, pos.y - tipCy);
 
-      const hitRadius = 18;
+      const hitRadius = 20;
 
       if (distB <= hitRadius && distB <= distC) {
         draggingHandle = 'B';
