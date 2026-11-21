@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>חקירת אי-שוויון המשולש</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      color: #1e293b;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* עמודת שליטה ימנית הניתנת לשינוי רוחב ולכיווץ */
+    .sidebar {
+      width: 320px;
+      min-width: 240px;
+      max-width: 520px;
+      background: #ffffff;
+      border-left: 1px solid #cbd5e1;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.04);
+      z-index: 10;
+      position: relative;
+      transition: width 0.15s ease, padding 0.15s ease;
+    }
+
+    .sidebar.resizing {
+      transition: none;
+      user-select: none;
+    }
+
+    .sidebar.collapsed {
+      width: 46px !important;
+      min-width: 46px !important;
+      padding: 12px 6px;
+      overflow: hidden;
+      align-items: center;
+    }
+
+    .sidebar.collapsed .sidebar-content {
+      display: none;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      border-bottom: none;
+      padding-bottom: 0;
+      justify-content: center;
+    }
+
+    .sidebar h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .btn-toggle-sidebar {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: #e2e8f0;
+    }
+
+    /* ידית גרירה לשינוי רוחב העמודה */
+    .resizer-handle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 7px;
+      height: 100%;
+      cursor: ew-resize;
+      background: transparent;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .resizer-handle:hover,
+    .resizer-handle.active {
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    .resizer-handle::after {
+      content: "";
+      width: 2px;
+      height: 36px;
+      background: #94a3b8;
+      border-radius: 2px;
+    }
+
+    .sidebar.collapsed .resizer-handle {
+      display: none;
+    }
+
+    .sidebar-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .instructions {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #475569;
+      background: #f8fafc;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .control-group {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 11px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .side-a-label { color: #2563eb; }
+    .side-b-label { color: #dc2626; }
+    .side-c-label { color: #16a34a; }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      min-width: 60px;
+      cursor: pointer;
+    }
+
+    input[type="number"] {
+      width: 66px;
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.98rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .status-box {
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      font-weight: 600;
+      text-align: center;
+      border: 2px solid transparent;
+    }
+
+    .status-valid {
+      background-color: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+
+    .status-degenerate {
+      background-color: #fef9c3;
+      color: #854d0e;
+      border-color: #fde047;
+    }
+
+    .status-invalid {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
+
+    .btn-reset {
+      padding: 10px 12px;
+      background-color: #334155;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-reset:hover {
+      background-color: #1e293b;
+    }
+
+    /* אזור הקנבס */
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      min-width: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="resizer-handle" id="resizerHandle" title="גרור לשינוי רוחב העמודה"></div>
+
+    <div class="sidebar-header">
+      <button class="btn-toggle-sidebar" id="btnToggleSidebar" title="כווץ / הרחב תפריט">❯</button>
+      <div class="sidebar-content" style="flex:1;">
+        <h1>אי-שוויון המשולש</h1>
+      </div>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="instructions">
+        בחרו אורכים לשלוש הצלעות בעזרת המחוונים או תיבות המספרים.
+        <br />
+        גררו את הקצוות שעל רשת המשבצות כדי לסובב כל צלע ב-360° סביב הקודקוד שלה בלי לשנות את אורכה.
+      </div>
+
+      <!-- צלע א' (בסיס) -->
+      <div class="control-group">
+        <div class="control-header">
+          <span class="side-a-label">צלע א' (בסיס)</span>
+        </div>
+        <div class="input-row">
+          <input type="range" id="sliderA" min="1" max="15" step="0.5" value="6" />
+          <input type="number" id="numA" min="1" max="15" step="0.5" value="6" />
+        </div>
+      </div>
+
+      <!-- צלע ב' (שמאלית) -->
+      <div class="control-group">
+        <div class="control-header">
+          <span class="side-b-label">צלע ב'</span>
+        </div>
+        <div class="input-row">
+          <input type="range" id="sliderB" min="1" max="15" step="0.5" value="5" />
+          <input type="number" id="numB" min="1" max="15" step="0.5" value="5" />
+        </div>
+      </div>
+
+      <!-- צלע ג' (ימנית) -->
+      <div class="control-group">
+        <div class="control-header">
+          <span class="side-c-label">צלע ג'</span>
+        </div>
+        <div class="input-row">
+          <input type="range" id="sliderC" min="1" max="15" step="0.5" value="4" />
+          <input type="number" id="numC" min="1" max="15" step="0.5" value="4" />
+        </div>
+      </div>
+
+      <div id="statusBox" class="status-box status-valid">
+        ניתן לבנות משולש סגור ותקין!
+      </div>
+
+      <button class="btn-reset" id="btnSnap">הצג מצב התחלתי / סגור משולש</button>
+    </div>
+  </aside>
+
+  <main class="canvas-container">
+    <canvas id="geoCanvas"></canvas>
+  </main>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const resizerHandle = document.getElementById('resizerHandle');
+    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+
+    const canvas = document.getElementById('geoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sliderA = document.getElementById('sliderA');
+    const numA = document.getElementById('numA');
+    const sliderB = document.getElementById('sliderB');
+    const numB = document.getElementById('numB');
+    const sliderC = document.getElementById('sliderC');
+    const numC = document.getElementById('numC');
+    const statusBox = document.getElementById('statusBox');
+    const btnSnap = document.getElementById('btnSnap');
+
+    let a = 6; // בסיס
+    let b = 5; // צלע מחוברת לקודקוד שמאלי
+    let c = 4; // צלע מחוברת לקודקוד ימני
+
+    let angleB = 0;
+    let angleC = Math.PI;
+    let draggingHandle = null;
+
+    // קנה מידה דינמי למשבצת כך שכל הסיבוב ב-360° יישאר תמיד בתוך המסך
+    let gridSize = 32;
+
+    const COLORS = {
+      a: '#2563eb',
+      b: '#dc2626',
+      c: '#16a34a',
+      grid: '#e2e8f0',
+      gridMajor: '#cbd5e1',
+      fillValid: 'rgba(37, 99, 235, 0.08)'
+    };
+
+    // --- ניהול הקטנה, הגדלה וכיווץ של העמודה הימנית ---
+    btnToggleSidebar.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      btnToggleSidebar.textContent = isCollapsed ? '❮' : '❯';
+      btnToggleSidebar.title = isCollapsed ? 'הרחב תפריט' : 'כווץ תפריט';
+      resizeCanvas();
+    });
+
+    let isResizingSidebar = false;
+
+    resizerHandle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      isResizingSidebar = true;
+      sidebar.classList.add('resizing');
+      resizerHandle.classList.add('active');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isResizingSidebar) return;
+      // כיוון RTL: העמודה בצד ימין, לכן רוחבה הוא מרחק העכבר מקצה ימין של החלון
+      const newWidth = window.innerWidth - e.clientX;
+      const clampedWidth = Math.max(240, Math.min(520, newWidth));
+      sidebar.style.width = `${clampedWidth}px`;
+      resizeCanvas();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isResizingSidebar) {
+        isResizingSidebar = false;
+        sidebar.classList.remove('resizing');
+        resizerHandle.classList.remove('active');
+        resizeCanvas();
+      }
+    });
+
+    // --- חישוב קנה מידה מותאם אוטומטית לגודל הצג ולאורך הצלעות ---
+    function computeViewportMetrics() {
+      const width = canvas.parentElement.clientWidth;
+      const height = canvas.parentElement.clientHeight;
+
+      // גבולות מערכת הצירים ביחידות משבצת:
+      // קודקוד שמאלי ב- (-a/2, 0), קודקוד ימני ב- (+a/2, 0)
+      // מעגל הסיבוב השמאלי משתרע עד (-a/2 - b) שמאלה ועד (+b / -b) אנכית
+      // מעגל הסיבוב הימני משתרע עד (+a/2 + c) ימינה ועד (+c / -c) אנכית
+      const minXUnits = Math.min(-a / 2 - b, a / 2 - c);
+      const maxXUnits = Math.max(a / 2 + c, -a / 2 + b);
+      const totalWidthUnits = maxXUnits - minXUnits;
+
+      const maxRadiusUnits = Math.max(b, c, 1);
+      const totalHeightUnits = 2 * maxRadiusUnits;
+
+      // שוליים נדיבים מסביב כדי שגם תוויות וידיות בקצה הסיבוב לא ייחתכו
+      const paddingPx = 56;
+      const availWidth = Math.max(120, width - paddingPx * 2);
+      const availHeight = Math.max(120, height - paddingPx * 2);
+
+      const scaleX = availWidth / totalWidthUnits;
+      const scaleY = availHeight / totalHeightUnits;
+
+      // הגבלת גודל משבצת מרבי כדי שבצלעות קצרות הרשת תישאר נעימה לעין
+      gridSize = Math.max(8, Math.min(36, scaleX, scaleY));
+
+      // מירכוז אופקי ואנכי מדויק של כל מעטפת הסיבוב בתוך הקנבס
+      const centerUnitsX = (minXUnits + maxXUnits) / 2;
+      const originX = width / 2 - centerUnitsX * gridSize;
+      const baseY = height / 2;
+
+      const leftX = originX - (a / 2) * gridSize;
+      const rightX = originX + (a / 2) * gridSize;
+
+      return { width, height, leftX, rightX, baseY, originX };
+    }
+
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = container.clientWidth * dpr;
+      canvas.height = container.clientHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    function getTriangleState(a, b, c) {
+      const eps = 1e-6;
+      const sumAB = a + b;
+      const sumAC = a + c;
+      const sumBC = b + c;
+
+      if (
+        Math.abs(sumAB - c) < eps ||
+        Math.abs(sumAC - b) < eps ||
+        Math.abs(sumBC - a) < eps
+      ) {
+        return 'degenerate';
+      }
+
+      if (sumAB > c && sumAC > b && sumBC > a) {
+        return 'valid';
+      }
+
+      return 'invalid';
+    }
+
+    function resetAnglesToDefault() {
+      const state = getTriangleState(a, b, c);
+
+      if (state === 'valid') {
+        const cosB = (a * a + b * b - c * c) / (2 * a * b);
+        const clampedCosB = Math.max(-1, Math.min(1, cosB));
+        const thetaB = Math.acos(clampedCosB);
+
+        angleB = -thetaB;
+
+        const tipBx = b * Math.cos(angleB);
+        const tipBy = b * Math.sin(angleB);
+        angleC = Math.atan2(tipBy - 0, tipBx - a);
+      } else if (state === 'degenerate') {
+        if (Math.abs((b + c) - a) < 1e-6) {
+          angleB = 0;
+          angleC = Math.PI;
+        } else if (Math.abs((a + c) - b) < 1e-6) {
+          angleB = 0;
+          angleC = 0;
+        } else {
+          angleB = Math.PI;
+          angleC = Math.PI;
+        }
+      } else {
+        angleB = -Math.PI / 3;
+        angleC = -2 * Math.PI / 3;
+      }
+    }
+
+    function updateStatusUI() {
+      const state = getTriangleState(a, b, c);
+      statusBox.className = 'status-box';
+
+      if (state === 'valid') {
+        statusBox.classList.add('status-valid');
+        statusBox.textContent = 'ניתן לבנות משולש סגור ותקין! ניתן לגרור ולסובב כל צלע בנפרד ב-360°.';
+      } else if (state === 'degenerate') {
+        statusBox.classList.add('status-degenerate');
+        statusBox.textContent = 'סכום שתי צלעות שווה לצלע השלישית: הקטעים מתלכדים לקו ישר (משולש מנוון).';
+      } else {
+        statusBox.classList.add('status-invalid');
+        statusBox.textContent = 'הצורה אינה נסגרת למשולש. סובבו את הקטעים ב-360° כדי לבדוק מדוע אינם נפגשים.';
+      }
+    }
+
+    function syncInputs(source, value) {
+      const val = Math.max(1, Math.min(15, parseFloat(value) || 1));
+      if (source === 'a') {
+        a = val;
+        sliderA.value = val;
+        numA.value = val;
+      } else if (source === 'b') {
+        b = val;
+        sliderB.value = val;
+        numB.value = val;
+      } else if (source === 'c') {
+        c = val;
+        sliderC.value = val;
+        numC.value = val;
+      }
+      resetAnglesToDefault();
+      updateStatusUI();
+      draw();
+    }
+
+    sliderA.addEventListener('input', (e) => syncInputs('a', e.target.value));
+    numA.addEventListener('input', (e) => syncInputs('a', e.target.value));
+    sliderB.addEventListener('input', (e) => syncInputs('b', e.target.value));
+    numB.addEventListener('input', (e) => syncInputs('b', e.target.value));
+    sliderC.addEventListener('input', (e) => syncInputs('c', e.target.value));
+    numC.addEventListener('input', (e) => syncInputs('c', e.target.value));
+
+    btnSnap.addEventListener('click', () => {
+      resetAnglesToDefault();
+      draw();
+    });
+
+    function drawGrid(width, height, leftX, baseY) {
+      ctx.clearRect(0, 0, width, height);
+
+      // עיגון רשת המשבצות לקודקוד השמאלי של הבסיס כדי שהמשבצות יתאימו בדיוק לאורכי הצלעות
+      const startX = leftX % gridSize;
+      const startY = baseY % gridSize;
+
+      ctx.lineWidth = 1;
+      for (let x = startX; x <= width; x += gridSize) {
+        const unitIndex = Math.round((x - leftX) / gridSize);
+        ctx.strokeStyle = (unitIndex % 5 === 0) ? COLORS.gridMajor : COLORS.grid;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+
+      for (let y = startY; y <= height; y += gridSize) {
+        const unitIndex = Math.round((y - baseY) / gridSize);
+        ctx.strokeStyle = (unitIndex % 5 === 0) ? COLORS.gridMajor : COLORS.grid;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawDashedCircle(cx, cy, radiusPx, color) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 1.8;
+      ctx.arc(cx, cy, radiusPx, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawSideLabel(text, x1, y1, x2, y2, color, offsetSign = -1) {
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+
+      const nx = (-dy / len) * 20 * offsetSign;
+      const ny = (dx / len) * 20 * offsetSign;
+
+      const labelX = midX + nx;
+      const labelY = midY + ny;
+
+      ctx.save();
+      ctx.font = 'bold 15px Segoe UI, sans-serif';
+      const textWidth = ctx.measureText(text).width;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillRect(labelX - textWidth / 2 - 5, labelY - 11, textWidth + 10, 22);
+
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, labelX, labelY);
+      ctx.restore();
+    }
+
+    function drawPoint(x, y, color, isHandle = false) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, isHandle ? 8 : 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = isHandle ? '#ffffff' : color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw() {
+      const { width, height, leftX, rightX, baseY } = computeViewportMetrics();
+      drawGrid(width, height, leftX, baseY);
+
+      const radiusB = b * gridSize;
+      const radiusC = c * gridSize;
+
+      const tipBx = leftX + radiusB * Math.cos(angleB);
+      const tipBy = baseY + radiusB * Math.sin(angleB);
+
+      const tipCx = rightX + radiusC * Math.cos(angleC);
+      const tipCy = baseY + radiusC * Math.sin(angleC);
+
+      const distTips = Math.hypot(tipBx - tipCx, tipBy - tipCy);
+      const state = getTriangleState(a, b, c);
+      const isClosedTriangle = state === 'valid' && distTips < 3;
+
+      if (isClosedTriangle) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(leftX, baseY);
+        ctx.lineTo(rightX, baseY);
+        ctx.lineTo(tipBx, tipBy);
+        ctx.closePath();
+        ctx.fillStyle = COLORS.fillValid;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 1. מעגלי טווח סיבוב מקווקווים 360 מעלות
+      drawDashedCircle(leftX, baseY, radiusB, COLORS.b);
+      drawDashedCircle(rightX, baseY, radiusC, COLORS.c);
+
+      // 2. ציור הצלעות
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(leftX, baseY);
+      ctx.lineTo(rightX, baseY);
+      ctx.strokeStyle = COLORS.a;
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(leftX, baseY);
+      ctx.lineTo(tipBx, tipBy);
+      ctx.strokeStyle = COLORS.b;
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(rightX, baseY);
+      ctx.lineTo(tipCx, tipCy);
+      ctx.strokeStyle = COLORS.c;
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. תוויות אורך בצבע של כל צלע
+      drawSideLabel(`${a}`, leftX, baseY, rightX, baseY, COLORS.a, -1);
+      drawSideLabel(`${b}`, leftX, baseY, tipBx, tipBy, COLORS.b, 1);
+      drawSideLabel(`${c}`, rightX, baseY, tipCx, tipCy, COLORS.c, -1);
+
+      // 4. נקודות ציר וידיות סיבוב
+      drawPoint(leftX, baseY, COLORS.a, false);
+      drawPoint(rightX, baseY, COLORS.a, false);
+      drawPoint(tipBx, tipBy, COLORS.b, true);
+      drawPoint(tipCx, tipCy, COLORS.c, true);
+    }
+
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const pos = getMousePos(e);
+      const { leftX, rightX, baseY } = computeViewportMetrics();
+
+      const tipBx = leftX + b * gridSize * Math.cos(angleB);
+      const tipBy = baseY + b * gridSize * Math.sin(angleB);
+
+      const tipCx = rightX + c * gridSize * Math.cos(angleC);
+      const tipCy = baseY + c * gridSize * Math.sin(angleC);
+
+      const distB = Math.hypot(pos.x - tipBx, pos.y - tipBy);
+      const distC = Math.hypot(pos.x - tipCx, pos.y - tipCy);
+
+      const hitRadius = 18;
+
+      if (distB <= hitRadius && distB <= distC) {
+        draggingHandle = 'B';
+      } else if (distC <= hitRadius) {
+        draggingHandle = 'C';
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!draggingHandle) return;
+
+      const pos = getMousePos(e);
+      const { leftX, rightX, baseY } = computeViewportMetrics();
+
+      if (draggingHandle === 'B') {
+        angleB = Math.atan2(pos.y - baseY, pos.x - leftX);
+      } else if (draggingHandle === 'C') {
+        angleC = Math.atan2(pos.y - baseY, pos.x - rightX);
+      }
+
+      draw();
+    });
+
+    window.addEventListener('mouseup', () => {
+      draggingHandle = null;
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        canvas.dispatchEvent(new MouseEvent('mousedown', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        }));
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (draggingHandle && e.touches.length > 0) {
+        const touch = e.touches[0];
+        window.dispatchEvent(new MouseEvent('mousemove', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        }));
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      draggingHandle = null;
+    });
+
+    resetAnglesToDefault();
+    updateStatusUI();
+    resizeCanvas();
+  </script>
+</body>
+</html>
